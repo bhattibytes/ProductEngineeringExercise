@@ -13,6 +13,8 @@ export default function KanbanPage({ personData, companyData }) {
   const [personCreateDoc, setpersonCreateDoc] = useState([])
   const [personCollaborators, setpersonCollaborators] = useState([])
   const [personComments, setpersonComments] = useState([])
+  const [companyUsers, setcompanyUsers] = useState({})
+  const [company3Comments, setcompany3Comments] = useState({})
 
   const setBoardTypefunc = (key) => {
     if (key === '1') {
@@ -21,15 +23,33 @@ export default function KanbanPage({ personData, companyData }) {
       setBoardType('company')
     }
   }
-
-  // setState for each of the colums for person
+  
   useEffect(async () => {
+     // setState for each of the colums for person page
     let createDoc = await personData.filter(person => person.document_created > 0)
     setpersonCreateDoc(createDoc)
     let collaborators = await personData.filter(person => person.collaborator_invited > 0)
     setpersonCollaborators(collaborators)
     let comments = await personData.filter(person => person.comment_created > 0)
     setpersonComments(comments)
+
+    // setState for each of the colums for company page
+    let companyComments = {}
+    let companyDetails = {}
+    personData.map(async (person) => {
+      if (companyDetails[person.company_id] === undefined) {
+        companyDetails[person.company_id] = 1
+      } else {
+        companyDetails[person.company_id]++
+      }
+    })
+    setcompanyUsers(companyDetails)
+    // find the companies that have at least 3 comments 
+    personData.filter(person => person.comment_created > 2).map(async (person) => {
+      companyComments[person.company_id] = person.company_id
+      companyComments[person.comment_created] = person.comment_created
+    })
+    setcompany3Comments(companyComments)
   }, [])
  
   return (
@@ -55,31 +75,31 @@ export default function KanbanPage({ personData, companyData }) {
                   <Card title={company.name}>
                     <strong>Signed Up:</strong> {company.signed_up} <br></br>
                     <strong>Last Seen:</strong>{} <br></br>
-                    <strong>Number of Users:</strong>{}
+                    <strong>Number of Users:</strong>{companyUsers[company.id]}
                   </Card>
                 </div>
               ))}
             </Col>
             <Col span={8}>
               <h2>At Least 2 Users</h2>
-              {companyData.map((company) => (
+              {companyData.filter( company => companyUsers[company.id] > 1).map((company) => (
                 <div key={company.id} style={{ marginBottom: '16px' }}>
                   <Card title={company.name}>
                     <strong>Signed Up:</strong> {company.signed_up} <br></br>
                     <strong>Last Seen:</strong>{} <br></br>
-                    <strong>Number of Users:</strong>{}
+                    <strong>Number of Users:</strong>{companyUsers[company.id]}
                   </Card>
                 </div>
               ))}
             </Col>
             <Col span={8}>
               <h2>At Least 3 Comments</h2>
-              {companyData.map((company) => (
+              {companyData.filter( company => company3Comments[company.id] > 2).map((company) => (
                 <div key={company.id} style={{ marginBottom: '16px' }}>
                   <Card title={company.name}>
                     <strong>Signed Up:</strong> {company.signed_up} <br></br>
                     <strong>Last Seen:</strong>{} <br></br>
-                    <strong>Number of Users:</strong>{}
+                    <strong>Number of Comments:</strong>{company3Comments[company.id]}
                   </Card>
                 </div>
               ))}
