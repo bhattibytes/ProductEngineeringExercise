@@ -23,9 +23,7 @@ export default function KanbanPage({ personData, companyData }) {
       setBoardType('company')
     }
   }
-  // console.log('personData: ', personData)
-  // console.log('companyData: ', companyData)
-  
+
   useEffect(async () => {
      // setState for each of the colums for person page
     let createDoc = await personData.filter(person => person.document_created > 0)
@@ -34,13 +32,14 @@ export default function KanbanPage({ personData, companyData }) {
     setpersonCollaborators(collaborators)
     let comments = await personData.filter(person => person.comment_created > 0)
     setpersonComments(comments)
-
+    
     // setState for each of the colums for company page
-    let companyComments = {}
+    let companyComments = []
     let companyDetails = {}
     personData.map(async (person) => {
       if (companyDetails[person.company_id] === undefined) {
         companyDetails[person.company_id] = 1
+        companyDetails[person.company_id +" lastseen"] = person.last_seen
       } else {
         companyDetails[person.company_id]++
       }
@@ -52,13 +51,18 @@ export default function KanbanPage({ personData, companyData }) {
         companyComments[person.company_id] = Number(person.comment_created)
       } else {
         companyComments[person.company_id] = Number(companyComments[person.company_id]) + Number(person.comment_created)
-      }
+      }  
     })
     setcompany3Comments(companyComments)
   }, [])
  
   return (
     <>
+    <div style={{
+      marginTop: "30px",
+      marginLeft: "30px",
+      backgroundColor: "#f0f2f5",
+    }}>
       <Tabs defaultActiveKey="1" onChange={setBoardTypefunc}>
         <TabPane tab="People" key="1">
           <h1>People</h1>
@@ -67,7 +71,7 @@ export default function KanbanPage({ personData, companyData }) {
           <h1>Companies</h1>
         </TabPane>
       </Tabs>
-    
+
     {boardType === 'company' ? (
       <div style={{ margin: '100px' }}>
         <h1>Kanban Board</h1>
@@ -80,7 +84,7 @@ export default function KanbanPage({ personData, companyData }) {
                 <div key={company.id} style={{ marginBottom: '16px' }}>
                   <Card title={company.name}>
                     <strong>Signed Up:</strong> {company.signed_up} <br></br>
-                    <strong>Last Seen:</strong>{} <br></br>
+                    <strong>Last Seen:</strong>{companyUsers[company.id +" lastseen"]} <br></br>
                     <strong>Number of Users:</strong>{companyUsers[company.id]}
                   </Card>
                 </div>) : null))}
@@ -91,7 +95,7 @@ export default function KanbanPage({ personData, companyData }) {
                 <div key={company.id} style={{ marginBottom: '16px' }}>
                   <Card title={company.name}>
                     <strong>Signed Up:</strong> {company.signed_up} <br></br>
-                    <strong>Last Seen:</strong>{} <br></br>
+                    <strong>Last Seen:</strong>{companyUsers[company.id +" lastseen"]} <br></br>
                     <strong>Number of Users:</strong>{companyUsers[company.id]}
                   </Card>
                 </div>
@@ -103,7 +107,7 @@ export default function KanbanPage({ personData, companyData }) {
                 <div key={company.id} style={{ marginBottom: '16px' }}>
                   <Card title={company.name}>
                     <strong>Signed Up:</strong> {company.signed_up} <br></br>
-                    <strong>Last Seen:</strong>{} <br></br>
+                    <strong>Last Seen:</strong>{companyUsers[company.id +" lastseen"]} <br></br>
                     <strong>Number of Comments:</strong>{company3Comments[company.id]}
                   </Card>
                 </div>
@@ -119,7 +123,7 @@ export default function KanbanPage({ personData, companyData }) {
           <Row gutter={16}>
             <Col span={6}>
               <h2>Signed Up</h2>
-              {personData.map((person) => (
+              {personData.filter(person => person.document_created < 1 && person.collaborator_invited < 1 && person.comment_created < 1).map((person) => (
                 <div key={person.id} style={{ marginBottom: '16px' }}>
                   <Card title={person.name}>
                     <strong>Last Seen:</strong>{person.last_seen}<br></br>
@@ -130,7 +134,7 @@ export default function KanbanPage({ personData, companyData }) {
             </Col>
             <Col span={6}>
               <h2>Created a Document</h2>
-              {personCreateDoc.map((person) => (
+              {personCreateDoc.filter(person => person.collaborator_invited < 1 && person.comment_created < 1).map((person) => (
                 <div key={person.id} style={{ marginBottom: '16px' }}>
                   <Card title={person.name}>
                     <strong>Last Seen:</strong>{person.last_seen}<br></br>
@@ -142,7 +146,7 @@ export default function KanbanPage({ personData, companyData }) {
             </Col>
             <Col span={6}>
               <h2>Invited Collaborator</h2>
-              {personCollaborators.map((person) => (
+              {personCollaborators.filter(person => person.comment_created < 1).map((person) => (
                 <div key={person.id} style={{ marginBottom: '16px' }}>
                   <Card title={person.name}>
                     <strong>Last Seen:</strong>{person.last_seen}<br></br>
@@ -169,6 +173,7 @@ export default function KanbanPage({ personData, companyData }) {
       </div>
     ) : null
     )}
+    </div>
     </>
   );
 }
