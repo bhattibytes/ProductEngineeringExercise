@@ -23,6 +23,8 @@ export default function KanbanPage({ personData, companyData }) {
       setBoardType('company')
     }
   }
+  // console.log('personData: ', personData)
+  // console.log('companyData: ', companyData)
   
   useEffect(async () => {
      // setState for each of the colums for person page
@@ -45,9 +47,12 @@ export default function KanbanPage({ personData, companyData }) {
     })
     setcompanyUsers(companyDetails)
     // find the companies that have at least 3 comments 
-    personData.filter(person => person.comment_created > 2).map(async (person) => {
-      companyComments[person.company_id] = person.company_id
-      companyComments[person.comment_created] = person.comment_created
+    personData.map(async (person) => {
+      if (companyComments[person.company_id] === undefined) {
+        companyComments[person.company_id] = Number(person.comment_created)
+      } else {
+        companyComments[person.company_id] = Number(companyComments[person.company_id]) + Number(person.comment_created)
+      }
     })
     setcompany3Comments(companyComments)
   }, [])
@@ -71,18 +76,18 @@ export default function KanbanPage({ personData, companyData }) {
             <Col span={8}>
               <h2>Signed Up</h2>
               {companyData.map((company) => (
+                companyUsers[company.id] < 2 && company3Comments[company.id] < 3 ? (
                 <div key={company.id} style={{ marginBottom: '16px' }}>
                   <Card title={company.name}>
                     <strong>Signed Up:</strong> {company.signed_up} <br></br>
                     <strong>Last Seen:</strong>{} <br></br>
                     <strong>Number of Users:</strong>{companyUsers[company.id]}
                   </Card>
-                </div>
-              ))}
+                </div>) : null))}
             </Col>
             <Col span={8}>
               <h2>At Least 2 Users</h2>
-              {companyData.filter( company => companyUsers[company.id] > 1).map((company) => (
+              {companyData.filter( company => companyUsers[company.id] > 1 && company3Comments[company.id] < 2).map((company) => (
                 <div key={company.id} style={{ marginBottom: '16px' }}>
                   <Card title={company.name}>
                     <strong>Signed Up:</strong> {company.signed_up} <br></br>
