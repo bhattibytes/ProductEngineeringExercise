@@ -13,7 +13,7 @@ export default function KanbanPage({ personData, companyData }) {
           <Col span={8}>
             <h2>Signed Up</h2>
             {companyData.map((company) => (
-              <div style={{ marginBottom: '16px' }}>
+              <div key={company.id} style={{ marginBottom: '16px' }}>
                 <Card title={company.name}>
                   <strong>Signed Up:</strong> {company.signed_up}
                 </Card>
@@ -23,7 +23,7 @@ export default function KanbanPage({ personData, companyData }) {
           <Col span={8}>
             <h2>At Least 2 Users</h2>
             {companyData.map((company) => (
-              <div style={{ marginBottom: '16px' }}>
+              <div key={company.id} style={{ marginBottom: '16px' }}>
                 <Card title={company.name}>
                   <strong>Signed Up:</strong> {company.signed_up}
                 </Card>
@@ -33,7 +33,7 @@ export default function KanbanPage({ personData, companyData }) {
           <Col span={8}>
             <h2>At Least 3 Comments</h2>
             {companyData.map((company) => (
-              <div style={{ marginBottom: '16px' }}>
+              <div key={company.id} style={{ marginBottom: '16px' }}>
                 <Card title={company.name}>
                   <strong>Signed Up:</strong> {company.signed_up}
                 </Card>
