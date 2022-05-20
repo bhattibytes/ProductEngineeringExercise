@@ -10,14 +10,28 @@ const API_URL = "https://v1.nocodeapi.com/headsup/google_sheets/AgICuFGNAdLNjVaY
 
 export default function KanbanPage({ personData, companyData }) {
   const [boardType, setBoardType] = useState('person')
+  const [personCreateDoc, setpersonCreateDoc] = useState([])
+  const [personCollaborators, setpersonCollaborators] = useState([])
+  const [personComments, setpersonComments] = useState([])
 
   const setBoardTypefunc = (key) => {
-    if(key === '1'){
+    if (key === '1') {
       setBoardType('person')
     } else if (key === '2'){
       setBoardType('company')
     }
   }
+
+  // setState for each of the colums for person
+  useEffect(async () => {
+    let createDoc = await personData.filter(person => person.document_created > 0)
+    setpersonCreateDoc(createDoc)
+    let collaborators = await personData.filter(person => person.collaborator_invited > 0)
+    setpersonCollaborators(collaborators)
+    let comments = await personData.filter(person => person.comment_created > 0)
+    setpersonComments(comments)
+  }, [])
+ 
   return (
     <>
       <Tabs defaultActiveKey="1" onChange={setBoardTypefunc}>
@@ -39,8 +53,8 @@ export default function KanbanPage({ personData, companyData }) {
               {companyData.map((company) => (
                 <div key={company.id} style={{ marginBottom: '16px' }}>
                   <Card title={company.name}>
-                    <strong>Signed Up:</strong> {company.signed_up}
-                    <strong>Last Seen:</strong>{}
+                    <strong>Signed Up:</strong> {company.signed_up} <br></br>
+                    <strong>Last Seen:</strong>{} <br></br>
                     <strong>Number of Users:</strong>{}
                   </Card>
                 </div>
@@ -51,8 +65,8 @@ export default function KanbanPage({ personData, companyData }) {
               {companyData.map((company) => (
                 <div key={company.id} style={{ marginBottom: '16px' }}>
                   <Card title={company.name}>
-                    <strong>Signed Up:</strong> {company.signed_up}
-                    <strong>Last Seen:</strong>{}
+                    <strong>Signed Up:</strong> {company.signed_up} <br></br>
+                    <strong>Last Seen:</strong>{} <br></br>
                     <strong>Number of Users:</strong>{}
                   </Card>
                 </div>
@@ -63,8 +77,8 @@ export default function KanbanPage({ personData, companyData }) {
               {companyData.map((company) => (
                 <div key={company.id} style={{ marginBottom: '16px' }}>
                   <Card title={company.name}>
-                    <strong>Signed Up:</strong> {company.signed_up}
-                    <strong>Last Seen:</strong>{}
+                    <strong>Signed Up:</strong> {company.signed_up} <br></br>
+                    <strong>Last Seen:</strong>{} <br></br>
                     <strong>Number of Users:</strong>{}
                   </Card>
                 </div>
@@ -78,7 +92,7 @@ export default function KanbanPage({ personData, companyData }) {
         <h1>Kanban Board</h1>
         <div className="site-card-wrapper">
           <Row gutter={16}>
-            <Col span={8}>
+            <Col span={6}>
               <h2>Signed Up</h2>
               {personData.map((person) => (
                 <div key={person.id} style={{ marginBottom: '16px' }}>
@@ -89,35 +103,38 @@ export default function KanbanPage({ personData, companyData }) {
                 </div>
               ))}
             </Col>
-            <Col span={8}>
+            <Col span={6}>
               <h2>Created a Document</h2>
-              {personData.map((person) => (
+              {personCreateDoc.map((person) => (
                 <div key={person.id} style={{ marginBottom: '16px' }}>
                   <Card title={person.name}>
                     <strong>Last Seen:</strong>{person.last_seen}<br></br>
-                    <strong>Signed Up:</strong> {person.signed_up}
+                    <strong>Signed Up:</strong> {person.signed_up}<br></br>
+                    <strong>#docsCreated:</strong>{person.document_created}
                   </Card>
                 </div>
               ))}
             </Col>
-            <Col span={8}>
+            <Col span={6}>
               <h2>Invited Collaborator</h2>
-              {personData.map((person) => (
+              {personCollaborators.map((person) => (
                 <div key={person.id} style={{ marginBottom: '16px' }}>
                   <Card title={person.name}>
                     <strong>Last Seen:</strong>{person.last_seen}<br></br>
-                    <strong>Signed Up:</strong> {person.signed_up}
+                    <strong>Signed Up:</strong> {person.signed_up}<br></br>
+                    <strong>#Collaborators Invited:</strong>{person.collaborator_invited}
                   </Card>
                 </div>
               ))}
             </Col>
-            <Col span={8}>
+            <Col span={6}>
               <h2>Commented on Document</h2>
-              {personData.map((person) => (
+              {personComments.map((person) => (
                 <div key={person.id} style={{ marginBottom: '16px' }}>
                   <Card title={person.name}>
                     <strong>Last Seen:</strong>{person.last_seen}<br></br>
-                    <strong>Signed Up:</strong> {person.signed_up}
+                    <strong>Signed Up:</strong> {person.signed_up}<br></br>
+                    <strong>#Comments Created:</strong>{person.comment_created}
                   </Card>
                 </div>
               ))}
