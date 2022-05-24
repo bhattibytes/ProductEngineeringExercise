@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { Card, Col, Row } from 'antd'
 import 'antd/dist/antd.css'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Tabs } from 'antd';
 
 const { TabPane } = Tabs;
@@ -15,6 +15,15 @@ export default function KanbanPage({ personData, companyData }) {
   const [personComments, setpersonComments] = useState([])
   const [companyUsers, setcompanyUsers] = useState({})
   const [company3Comments, setcompany3Comments] = useState({})
+  const [sortedData , setSortedData] = useState([])
+  const [, updateState] = useState();
+  const forceUpdate = useCallback(() => updateState({}), []);
+
+  // console.log('CompanyData: ', companyData)
+  // console.log('CompanyUsers: ', companyUsers)
+  // console.log('Sorted Data: ', sortedData)
+  // console.log('personCreateDoc: ', personCreateDoc)
+  // console.log('personData: ', personData)
 
   const setBoardTypefunc = (key) => {
     if (key === '1') {
@@ -26,17 +35,17 @@ export default function KanbanPage({ personData, companyData }) {
 
   useEffect(async () => {
      // setState for each of the colums for person page
-    let createDoc = await personData.filter(person => person.document_created > 0)
+    let createDoc = await personData.filter(person => person.document_created > 0).sort((a, b) => (Number(a.document_created) > Number(b.document_created)) ? -1 : 1)
     setpersonCreateDoc(createDoc)
-    let collaborators = await personData.filter(person => person.collaborator_invited > 0)
+    let collaborators = await personData.filter(person => person.collaborator_invited > 0).sort((a, b) => (Number(a.document_created) > Number(b.document_created)) ? -1 : 1)
     setpersonCollaborators(collaborators)
-    let comments = await personData.filter(person => person.comment_created > 0)
+    let comments = await personData.filter(person => person.comment_created > 0).sort((a, b) => (Number(a.document_created) > Number(b.document_created)) ? -1 : 1)
     setpersonComments(comments)
     
     // setState for each of the colums for company page
     let companyComments = []
     let companyDetails = {}
-    personData.map(async (person) => {
+    await personData.map((person) => {
       if (companyDetails[person.company_id] === undefined) {
         companyDetails[person.company_id] = 1
         companyDetails[person.company_id +" lastseen"] = person.last_seen
@@ -46,7 +55,7 @@ export default function KanbanPage({ personData, companyData }) {
     })
     setcompanyUsers(companyDetails)
     // find the companies that have at least 3 comments 
-    personData.map(async (person) => {
+    await personData.map((person) => {
       if (companyComments[person.company_id] === undefined) {
         companyComments[person.company_id] = Number(person.comment_created)
       } else {
@@ -54,8 +63,34 @@ export default function KanbanPage({ personData, companyData }) {
       }  
     })
     setcompany3Comments(companyComments)
-  }, [])
- 
+
+    let allData = []
+    await companyData.map(company => {
+      let data = {};
+      data.company_id = company.id
+      data.users = companyUsers[company.id]
+      data.last_seen = companyUsers[company.id + " lastseen"]
+      data.name = company.name
+      data.signed_up = company.signed_up
+      allData.push(data)
+    })
+    allData.sort((a, b) => (a.users < b.users) ? -1 : 1)
+    
+    setSortedData(allData)
+  }, [personData, companyData])
+
+  const handleSortUsers = () => {
+    setSortedData(sortedData.reverse())
+    forceUpdate()
+  }
+
+  const handleSortDocs = () => {
+    setpersonCreateDoc(personCreateDoc.reverse())
+    setpersonCollaborators(personCollaborators.reverse())
+    setpersonComments(personComments.reverse())
+    forceUpdate()
+  }
+
   return (
     <>
     <div style={{
@@ -75,43 +110,46 @@ export default function KanbanPage({ personData, companyData }) {
     {boardType === 'company' ? (
       <div style={{ margin: '100px' }}>
         <h1>Kanban Board</h1>
+        <button onClick={handleSortUsers}>Sort By # of Users</button>
         <div className="site-card-wrapper">
           <Row gutter={16}>
             <Col span={8}>
               <h2>Signed Up</h2>
-              {companyData.map((company) => (
-                companyUsers[company.id] < 2 && company3Comments[company.id] < 3 ? (
-                <div key={company.id} style={{ marginBottom: '16px' }}>
+              {sortedData.map((company) => (
+                companyUsers[company.company_id] < 2 && company3Comments[company.company_id] < 3 ? (
+                <div key={company.company_id} style={{ marginBottom: '16px' }}>
                   <Card title={company.name}>
                     <strong>Signed Up:</strong> {company.signed_up} <br></br>
-                    <strong>Last Seen:</strong>{companyUsers[company.id +" lastseen"]} <br></br>
-                    <strong>Number of Users:</strong>{companyUsers[company.id]}
+                    <strong>Last Seen:</strong>{companyUsers[company.company_id +" lastseen"]} <br></br>
+                    <strong>Number of Users:</strong>{companyUsers[company.company_id]}
                   </Card>
                 </div>) : null))}
             </Col>
             <Col span={8}>
               <h2>At Least 2 Users</h2>
-              {companyData.filter( company => companyUsers[company.id] > 1 && company3Comments[company.id] < 2).map((company) => (
-                <div key={company.id} style={{ marginBottom: '16px' }}>
+              {sortedData.filter( company => companyUsers[company.company_id] > 1 && company3Comments[company.company_id] < 2).map((company) => {
+                return <div key={company.company_id} style={{ marginBottom: '16px' }}>
                   <Card title={company.name}>
                     <strong>Signed Up:</strong> {company.signed_up} <br></br>
-                    <strong>Last Seen:</strong>{companyUsers[company.id +" lastseen"]} <br></br>
-                    <strong>Number of Users:</strong>{companyUsers[company.id]}
+                    <strong>Last Seen:</strong>{companyUsers[company.company_id +" lastseen"]} <br></br>
+                    <strong>Number of Comments:</strong>{company3Comments[company.company_id]}<br></br>
+                    <strong>Number of Users:</strong>{companyUsers[company.company_id]}
                   </Card>
                 </div>
-              ))}
+              })}
             </Col>
-            <Col span={8}>
+            <Col span={8}> 
               <h2>At Least 3 Comments</h2>
-              {companyData.filter( company => company3Comments[company.id] > 2).map((company) => (
-                <div key={company.id} style={{ marginBottom: '16px' }}>
+              { sortedData.filter( company => company3Comments[company.company_id] > 2 ).map(company => {
+                return <div key={company.company_id} style={{ marginBottom: '16px' }}>
                   <Card title={company.name}>
                     <strong>Signed Up:</strong> {company.signed_up} <br></br>
-                    <strong>Last Seen:</strong>{companyUsers[company.id +" lastseen"]} <br></br>
-                    <strong>Number of Comments:</strong>{company3Comments[company.id]}
+                    <strong>Last Seen:</strong>{company.last_seen} <br></br>
+                    <strong>Number of Comments:</strong>{company3Comments[company.company_id]}<br></br>
+                    <strong>Number of Users:</strong>{company.users}
                   </Card>
                 </div>
-              ))}
+              })}
             </Col>
           </Row>
         </div>
@@ -119,6 +157,7 @@ export default function KanbanPage({ personData, companyData }) {
     ) : ( boardType === 'person' ? (
       <div style={{ margin: '100px' }}>
         <h1>Kanban Board</h1>
+        <button onClick={handleSortDocs}>Sort By # of Docs</button>
         <div className="site-card-wrapper">
           <Row gutter={16}>
             <Col span={6}>
@@ -127,7 +166,8 @@ export default function KanbanPage({ personData, companyData }) {
                 <div key={person.id} style={{ marginBottom: '16px' }}>
                   <Card title={person.name}>
                     <strong>Last Seen:</strong>{person.last_seen}<br></br>
-                    <strong>Signed Up:</strong> {person.signed_up}
+                    <strong>Signed Up:</strong> {person.signed_up}<br></br>
+                    <strong>#docsCreated:</strong>{person.document_created}
                   </Card>
                 </div>
               ))}
@@ -151,7 +191,8 @@ export default function KanbanPage({ personData, companyData }) {
                   <Card title={person.name}>
                     <strong>Last Seen:</strong>{person.last_seen}<br></br>
                     <strong>Signed Up:</strong> {person.signed_up}<br></br>
-                    <strong>#Collaborators Invited:</strong>{person.collaborator_invited}
+                    <strong>#Collaborators Invited:</strong>{person.collaborator_invited}<br></br>
+                    <strong>#docsCreated:</strong>{person.document_created}
                   </Card>
                 </div>
               ))}
@@ -163,7 +204,8 @@ export default function KanbanPage({ personData, companyData }) {
                   <Card title={person.name}>
                     <strong>Last Seen:</strong>{person.last_seen}<br></br>
                     <strong>Signed Up:</strong> {person.signed_up}<br></br>
-                    <strong>#Comments Created:</strong>{person.comment_created}
+                    <strong>#Comments Created:</strong>{person.comment_created}<br></br>
+                    <strong>#docsCreated:</strong>{person.document_created}
                   </Card>
                 </div>
               ))}
@@ -177,12 +219,6 @@ export default function KanbanPage({ personData, companyData }) {
     </>
   );
 }
-
-
-
-
-
-
 
 export async function getStaticProps(context) {
 
